@@ -1,0 +1,41 @@
+@use '../core/boilerplate.scss' as *;
+
+.page_wrapper {
+  @include primary-font();
+  padding: 0;
+  margin: 0;
+  font-size: 16px;
+}
+
+.global_background {
+  // need to override material
+  background-color: $color-neutral-1 !important;
+}
+
+.global_background main {
+  // Ensures the whole sidebar is the same color.
+  background-color: #222222;
+}
+
+// Ensure the scrolling indicators/scrollable area remains above the horizontal scroll bar, when the horizontal scroll barr is present.
+// Note: this doesn't seem to affect MacOS, but this is deemed acceptable because MacOS hides the horizontal scroll bar until you interact with it.
+.adminSidebar > .MuiDrawer-paper > div {
+  height: calc(100% - 3em);
+}
+
+.card_section {
+  &_wrapper {
+    display: flex;
+    justify-content: space-between;
+
+    @include tablet-large-down {
+      flex-direction: column;
+    }
+  }
+}
+
+.card {
+  box-shadow: $drop-shadow;
+  padding: 24px;
+  margin: 12px;
+}
