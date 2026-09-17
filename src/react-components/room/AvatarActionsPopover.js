@@ -105,10 +105,7 @@ export function AvatarActionsPopoverButton() {
             label={<FormattedMessage id="px-avatar-actions.toolbar" defaultMessage="Dance" />}
             preset="accent2"
             selected={popoverVisible}
-            onClick={() => {
-              setVisible(!visible);
-              togglePopover();
-            }}
+            onClick={togglePopover}
           />
         </ToolTip>
       )}
