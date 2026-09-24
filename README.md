@@ -60,6 +60,8 @@ Contributors are expected to abide by the project's [Code of Conduct](./CODE_OF_
 * [Networked A-Frame](https://github.com/Hubs-Foundation/networked-aframe).
 * [Hubs-Ops](https://github.com/Hubs-Foundation/hubs-ops) - Infrastructure as code + management tools for running necessary backend services on AWS.
 
+* Bass Speakers by Zsky [CC-BY 3.0] via Poly Pizza
+
 ## License
 
 Hubs is licensed with the [Mozilla Public License 2.0](./LICENSE)
