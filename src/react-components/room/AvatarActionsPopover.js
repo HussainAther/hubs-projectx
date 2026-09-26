@@ -32,19 +32,31 @@ function AvatarActionsContent({ action, onSelect, onStand }) {
         preset={action === PX_AVATAR_ACTIONS.CLUB_SWAY ? "accent2" : "basic"}
         onClick={() => onSelect(PX_AVATAR_ACTIONS.CLUB_SWAY)}
       >
-        <FormattedMessage id="px-avatar-actions.club-sway" defaultMessage="Club Sway" />
+        <FormattedMessage id="px-avatar-actions.club-sway" defaultMessage="Club Sway + Spin" />
       </Button>
       <Button
         preset={action === PX_AVATAR_ACTIONS.TWO_STEP ? "accent2" : "basic"}
         onClick={() => onSelect(PX_AVATAR_ACTIONS.TWO_STEP)}
       >
-        <FormattedMessage id="px-avatar-actions.two-step" defaultMessage="Two-Step" />
+        <FormattedMessage id="px-avatar-actions.two-step" defaultMessage="Dynamic Two-Step" />
+      </Button>
+      <Button
+        preset={action === PX_AVATAR_ACTIONS.CHA_CHA ? "accent2" : "basic"}
+        onClick={() => onSelect(PX_AVATAR_ACTIONS.CHA_CHA)}
+      >
+        <FormattedMessage id="px-avatar-actions.cha-cha" defaultMessage="Cha-Cha" />
+      </Button>
+      <Button
+        preset={action === PX_AVATAR_ACTIONS.SPIN ? "accent2" : "basic"}
+        onClick={() => onSelect(PX_AVATAR_ACTIONS.SPIN)}
+      >
+        <FormattedMessage id="px-avatar-actions.spin" defaultMessage="Spin" />
       </Button>
       <Button
         preset={action === PX_AVATAR_ACTIONS.SLOW_GROOVE ? "accent2" : "basic"}
         onClick={() => onSelect(PX_AVATAR_ACTIONS.SLOW_GROOVE)}
       >
-        <FormattedMessage id="px-avatar-actions.slow-groove" defaultMessage="Slow Groove" />
+        <FormattedMessage id="px-avatar-actions.slow-groove" defaultMessage="Wide Slow Groove" />
       </Button>
       <Button preset="basic" onClick={() => onSelect(PX_AVATAR_ACTIONS.IDLE)}>
         <FormattedMessage id="px-avatar-actions.stop" defaultMessage="Stop Dance / Return to Idle" />

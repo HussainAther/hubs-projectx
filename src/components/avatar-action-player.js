@@ -6,7 +6,9 @@ export const PX_AVATAR_ACTIONS = {
   STAND: "stand",
   CLUB_SWAY: "dance-club-sway",
   TWO_STEP: "dance-two-step",
-  SLOW_GROOVE: "dance-slow-groove"
+  SLOW_GROOVE: "dance-slow-groove",
+  CHA_CHA: "dance-cha-cha",
+  SPIN: "dance-spin"
 };
 
 const ACTION_CLIPS = {
@@ -15,8 +17,28 @@ const ACTION_CLIPS = {
   [PX_AVATAR_ACTIONS.STAND]: { clip: "PX_Stand", duration: 0.8, loop: false },
   [PX_AVATAR_ACTIONS.CLUB_SWAY]: { clip: "PX_Dance_ClubSway", loop: true },
   [PX_AVATAR_ACTIONS.TWO_STEP]: { clip: "PX_Dance_TwoStep", loop: true },
-  [PX_AVATAR_ACTIONS.SLOW_GROOVE]: { clip: "PX_Dance_SlowGroove", loop: true }
+  [PX_AVATAR_ACTIONS.SLOW_GROOVE]: { clip: "PX_Dance_SlowGroove", loop: true },
+  // The avatar GLB currently has three embedded dance clips. These two
+  // expanded actions reuse the closest clip and add synchronized procedural
+  // body translation / rotation on top of it.
+  [PX_AVATAR_ACTIONS.CHA_CHA]: { clip: "PX_Dance_TwoStep", loop: true },
+  [PX_AVATAR_ACTIONS.SPIN]: { clip: "PX_Dance_ClubSway", loop: true }
 };
+
+const DANCE_ACTIONS = [
+  PX_AVATAR_ACTIONS.CLUB_SWAY,
+  PX_AVATAR_ACTIONS.TWO_STEP,
+  PX_AVATAR_ACTIONS.SLOW_GROOVE,
+  PX_AVATAR_ACTIONS.CHA_CHA,
+  PX_AVATAR_ACTIONS.SPIN
+];
+
+const TWO_PI = Math.PI * 2;
+
+// Visual-only model offset while seated. The waypoint, camera, and networked
+// avatar rig remain at their existing positions; only the rendered avatar body
+// is lowered into the chair.
+const PX_SEATED_MODEL_OFFSET_Y = -0.28;
 
 let localSeatWaypoint = null;
 let standTimer = null;
@@ -66,11 +88,10 @@ export function leaveLocalSeat(playStand = true) {
     characterController.isTeleportingDisabled = false;
     if (seat) {
       const target = seat.el.object3D.getWorldPosition(new THREE.Vector3());
-      const forward = document
-        .getElementById("avatar-pov-node")
-        .object3D.getWorldDirection(new THREE.Vector3())
-        .setY(0)
-        .normalize();
+      const pov = document.getElementById("avatar-pov-node");
+      const forward = pov
+        ? pov.object3D.getWorldDirection(new THREE.Vector3()).setY(0).normalize()
+        : new THREE.Vector3(0, 0, -1);
       target.addScaledVector(forward, 0.75);
       characterController.teleportTo(target);
     }
@@ -98,7 +119,7 @@ function enterLocalSeat(waypoint) {
 }
 
 export function selectLocalDance(action) {
-  if (![PX_AVATAR_ACTIONS.CLUB_SWAY, PX_AVATAR_ACTIONS.TWO_STEP, PX_AVATAR_ACTIONS.SLOW_GROOVE].includes(action)) {
+  if (!DANCE_ACTIONS.includes(action)) {
     return setLocalAvatarAction(PX_AVATAR_ACTIONS.IDLE);
   }
   if (localSeatWaypoint || getLocalAvatarAction() === PX_AVATAR_ACTIONS.SIT) leaveLocalSeat(false);
@@ -109,11 +130,19 @@ function isProjectXSeat(waypoint) {
   return waypoint?.el?.object3D?.name?.startsWith("PX_Seat_");
 }
 
+function smoothstep01(value) {
+  const t = Math.max(0, Math.min(1, value));
+  return t * t * (3 - 2 * t);
+}
+
 AFRAME.registerComponent("avatar-action-player", {
   init() {
     this.rigEl = this.el.parentNode;
     this.currentAction = null;
     this.currentTimer = null;
+    this.baseModelPosition = null;
+    this.baseModelRotationY = 0;
+    this.modelLoaded = false;
     this.onModelLoaded = this.onModelLoaded.bind(this);
     this.onRigChanged = this.onRigChanged.bind(this);
     this.onSeatEntered = this.onSeatEntered.bind(this);
@@ -133,6 +162,9 @@ AFRAME.registerComponent("avatar-action-player", {
   },
 
   onModelLoaded() {
+    this.baseModelPosition = this.el.object3D.position.clone();
+    this.baseModelRotationY = this.el.object3D.rotation.y;
+    this.modelLoaded = true;
     this.applyNetworkedAction();
   },
 
@@ -172,6 +204,73 @@ AFRAME.registerComponent("avatar-action-player", {
     next.fadeIn(0.15).play();
     this.currentAction = next;
     return true;
+  },
+
+  applyProceduralMotion(action, elapsed) {
+    if (!this.modelLoaded || !this.baseModelPosition) return;
+
+    const object = this.el.object3D;
+
+    // Reset before applying the current frame so procedural motion cannot drift.
+    object.position.copy(this.baseModelPosition);
+    object.rotation.y = this.baseModelRotationY;
+
+    if (action === PX_AVATAR_ACTIONS.SIT) {
+      object.position.y += PX_SEATED_MODEL_OFFSET_Y;
+      object.matrixNeedsUpdate = true;
+      return;
+    }
+
+    if (action === PX_AVATAR_ACTIONS.CLUB_SWAY) {
+      const cycle = elapsed % 8.0;
+      const spin = smoothstep01((cycle - 5.2) / 1.5);
+
+      object.position.x += 0.22 * Math.sin(elapsed * 2.4);
+      object.position.z += 0.1 * Math.sin(elapsed * 4.8);
+      object.position.y += 0.035 * Math.sin(elapsed * 6.0);
+      object.rotation.y += 0.35 * Math.sin(elapsed * 1.5) + TWO_PI * spin;
+    } else if (action === PX_AVATAR_ACTIONS.TWO_STEP) {
+      const beat = elapsed * 4.2;
+
+      object.position.x += 0.24 * Math.sin(beat);
+      object.position.z += 0.15 * Math.sin(beat * 0.5 + Math.PI / 2);
+      object.position.y += 0.025 * Math.abs(Math.sin(beat));
+      object.rotation.y += 0.28 * Math.sin(beat * 0.5);
+    } else if (action === PX_AVATAR_ACTIONS.SLOW_GROOVE) {
+      object.position.x += 0.17 * Math.sin(elapsed * 1.7);
+      object.position.z += 0.17 * Math.cos(elapsed * 1.7);
+      object.position.y += 0.025 * Math.sin(elapsed * 3.4);
+      object.rotation.y += 0.48 * Math.sin(elapsed * 1.1);
+    } else if (action === PX_AVATAR_ACTIONS.CHA_CHA) {
+      const beat = elapsed * 5.4;
+      const quickQuickSlow = Math.sin(beat) + 0.45 * Math.sin(beat * 2.0);
+
+      object.position.x += 0.27 * quickQuickSlow;
+      object.position.z += 0.18 * Math.sin(beat * 0.5 + Math.PI / 3);
+      object.position.y += 0.035 * Math.abs(Math.sin(beat * 1.5));
+      object.rotation.y += 0.42 * Math.sin(beat * 0.5);
+    } else if (action === PX_AVATAR_ACTIONS.SPIN) {
+      const spinCycle = elapsed % 4.0;
+      const spin = smoothstep01((spinCycle - 0.35) / 2.7);
+
+      object.position.x += 0.12 * Math.sin(elapsed * 2.0);
+      object.position.z += 0.12 * Math.cos(elapsed * 2.0);
+      object.position.y += 0.03 * Math.abs(Math.sin(elapsed * 4.0));
+      object.rotation.y += TWO_PI * spin;
+    }
+
+    object.matrixNeedsUpdate = true;
+  },
+
+  tick() {
+    if (!this.modelLoaded) return;
+
+    const data = this.rigEl.components["networked-avatar"]?.data;
+    if (!data) return;
+
+    const action = ACTION_CLIPS[data.px_action] ? data.px_action : PX_AVATAR_ACTIONS.IDLE;
+    const elapsed = Math.max(0, (getServerTime() - (data.px_action_started_at || getServerTime())) / 1000);
+    this.applyProceduralMotion(action, elapsed);
   },
 
   applyNetworkedAction() {
