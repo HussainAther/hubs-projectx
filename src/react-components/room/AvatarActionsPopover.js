@@ -58,6 +58,24 @@ function AvatarActionsContent({ action, onSelect, onStand }) {
       >
         <FormattedMessage id="px-avatar-actions.slow-groove" defaultMessage="Wide Slow Groove" />
       </Button>
+      <Button
+        preset={action === PX_AVATAR_ACTIONS.SHUFFLE ? "accent2" : "basic"}
+        onClick={() => onSelect(PX_AVATAR_ACTIONS.SHUFFLE)}
+      >
+        <FormattedMessage id="px-avatar-actions.shuffle" defaultMessage="Neon Shuffle" />
+      </Button>
+      <Button
+        preset={action === PX_AVATAR_ACTIONS.DISCO_TURN ? "accent2" : "basic"}
+        onClick={() => onSelect(PX_AVATAR_ACTIONS.DISCO_TURN)}
+      >
+        <FormattedMessage id="px-avatar-actions.disco-turn" defaultMessage="Disco Turn" />
+      </Button>
+      <Button
+        preset={action === PX_AVATAR_ACTIONS.FREESTYLE ? "accent2" : "basic"}
+        onClick={() => onSelect(PX_AVATAR_ACTIONS.FREESTYLE)}
+      >
+        <FormattedMessage id="px-avatar-actions.freestyle" defaultMessage="Freestyle Showcase" />
+      </Button>
       <Button preset="basic" onClick={() => onSelect(PX_AVATAR_ACTIONS.IDLE)}>
         <FormattedMessage id="px-avatar-actions.stop" defaultMessage="Stop Dance / Return to Idle" />
       </Button>
